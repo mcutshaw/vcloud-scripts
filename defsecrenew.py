@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import requests
 import base64
+import threading
 from xml.etree import ElementTree
 
 fileconfig = open('defsecrenew.conf','r')
@@ -30,19 +31,27 @@ def renew():
         resp = requests.get(url=api+'/vAppTemplates/query?page='+str(counter),headers=headers)
         if('BAD_REQUEST' in resp.text):
             end = False
-        xml_content = resp.text
-        root = ElementTree.fromstring(xml_content)
-        for child in root:
-            if('name' in child.attrib):
-                if 'Def' in child.attrib['name']:
-                    print(child.attrib['name'],end=': ')
-                    child_id = child.attrib['href'].replace('https://vcloud.ialab.us/api/vAppTemplate/','')
-                    resp = requests.get(url=api+'/vAppTemplate/'+child_id+'/leaseSettingsSection',headers=headers)
-                    resp = requests.put(url=api+'/vAppTemplate/'+child_id+'/leaseSettingsSection',headers=headers,data=resp.text)
-                    print("Renewed")
+            break
+        t = threading.Thread(target=grab_renew, args = (resp,))
+        t.start()
         counter = counter +1
+def grab_renew(resp):
+    xml_content = resp.text                                                                                                                                                                                
+    root = ElementTree.fromstring(xml_content)
+    for child in root:
+        if('name' in child.attrib):
+            if 'Def' in child.attrib['name']:
+                t = threading.Thread(target=request_renew, args = (child,))
+                t.start()
+
+def request_renew(child):
+    child_id = child.attrib['href'].replace('https://vcloud.ialab.us/api/vAppTemplate/','')
+    resp = requests.get(url=api+'/vAppTemplate/'+child_id+'/leaseSettingsSection',headers=headers)
+    resp = requests.put(url=api+'/vAppTemplate/'+child_id+'/leaseSettingsSection',headers=headers,data=resp.text)
+    print(child.attrib['name'],"Renewed")
+
+
 
 if __name__ == '__main__':
     set_auth_token()
     renew()
-    print("End")
