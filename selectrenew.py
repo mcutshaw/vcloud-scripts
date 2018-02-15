@@ -30,7 +30,7 @@ def renew():
     end = True
     counter = 1
     while end:
-        resp = requests.get(url=api+'/vAppTemplates/query?page='+str(counter),headers=headers)
+        resp = requests.get(url=api+'/vApps/query?page='+str(counter),headers=headers)
         if('BAD_REQUEST' in resp.text):
             end = False
             break
@@ -42,20 +42,19 @@ def grab_renew(resp):
     root = ElementTree.fromstring(xml_content)
     for child in root:
         if('name' in child.attrib):
-            if 'Def' in child.attrib['name']:
+            if 'CCDC_Practice' in child.attrib['name']:
                 t = threading.Thread(target=request_renew, args = (child,))
                 t.start()
 
 def request_renew(child):
     try:
-        child_id = child.attrib['href'].replace('https://vcloud.ialab.us/api/vAppTemplate/','')
-        resp = requests.get(url=api+'/vAppTemplate/'+child_id+'/leaseSettingsSection',headers=headers)
-        resp = requests.put(url=api+'/vAppTemplate/'+child_id+'/leaseSettingsSection',headers=headers,data=resp.text)
+        child_id = child.attrib['href'].replace('https://vcloud.ialab.us/api/vApp/','')
+        resp = requests.get(url=api+'/vApp/'+child_id+'/leaseSettingsSection',headers=headers)
+        resp = requests.put(url=api+'/vApp/'+child_id+'/leaseSettingsSection',headers=headers,data=resp.text)
         print(child.attrib['name'],"Renewed")
-        requests.post(url=log_ip,verify=False,data={'defsec':str(child.attrib['name'])+" renewed at "+str(datetime.datetime.now())})
+        requests.post(url=log_ip,verify=False,data={'defsecpractice':str(child.attrib['name'])+" renewed at "+str(datetime.datetime.now())})
     except:
-        requests.post(url=log_ip,verify=False,data={'defsec':str(child.attrib['name'])+" renewed at "+str(datetime.datetime.now())})
-
+        requests.post(url=log_ip,verify=False,data={'defsecpractice':str(child.attrib['name'])+" renewed at "+str(datetime.datetime.now())})
 
 if __name__ == '__main__':
     set_auth_token()
