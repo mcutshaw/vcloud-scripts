@@ -3,6 +3,7 @@ import requests
 import base64
 import threading
 import datetime
+from requests.auth import HTTPBasicAuth
 from xml.etree import ElementTree
 
 fileconfig = open('defsecrenew.conf','r')
@@ -11,6 +12,8 @@ passwd = fileconfig.readline().replace('\n','')
 host = fileconfig.readline().replace('\n','')
 org = fileconfig.readline().replace('\n','')
 log_ip = fileconfig.readline().replace('\n','')
+username = fileconfig.readline().replace('\n','')
+password = fileconfig.readline().replace('\n','')
 
 api='https://%s/api' % host
 session_url='%s/sessions' % api
@@ -52,9 +55,9 @@ def request_renew(child):
         resp = requests.get(url=api+'/vAppTemplate/'+child_id+'/leaseSettingsSection',headers=headers)
         resp = requests.put(url=api+'/vAppTemplate/'+child_id+'/leaseSettingsSection',headers=headers,data=resp.text)
         print(child.attrib['name'],"Renewed")
-        requests.post(url=log_ip,verify=False,data={'defsec':str(child.attrib['name'])+" renewed at "+str(datetime.datetime.now())})
+        requests.post(url=log_ip,verify=False,auth=HTTPBasicAuth(username, password),data={'defsec':str(child.attrib['name'])+" renewed at "+str(datetime.datetime.now())})
     except:
-        requests.post(url=log_ip,verify=False,data={'defsec':str(child.attrib['name'])+" renewed at "+str(datetime.datetime.now())})
+        requests.post(url=log_ip,verify=False,auth=HTTPBasicAuth(username, password),data={'defsec':str(child.attrib['name'])+" renewed at "+str(datetime.datetime.now())})
 
 
 if __name__ == '__main__':
